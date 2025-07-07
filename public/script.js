@@ -29,35 +29,21 @@ document.getElementById('generate-btn').addEventListener('click', async () => {
     }
     
     const data = await response.json();
-    const quotes = Array.isArray(data?.quotes) ? data.quotes : [];
     
     quoteContainer.style.opacity = '0';
     setTimeout(() => {
-      if (quotes.length > 0) {
-        quoteContainer.innerHTML = `
-          <div class="quote-box">
-            <ol class="quote-list">
-              ${quotes.map(quote => `<li>"${quote}"</li>`).join('')}
-            </ol>
-          </div>
-        `;
-      } else {
-        quoteContainer.innerHTML = `
-          <div class="quote-box">
-            <p>No quotes found about ${keyword}. Try another topic! ✨</p>
-          </div>
-        `;
-      }
+      quoteContainer.innerHTML = `
+        <div class="quote-box">
+          <ol class="quote-list">
+            ${data.quotes.map(quote => `<li>"${quote}"</li>`).join('')}
+          </ol>
+        </div>
+      `;
       quoteContainer.style.opacity = '1';
     }, 300);
     
   } catch (error) {
-    quoteContainer.innerHTML = `
-      <div class="quote-box">
-        <p>Starlight malfunction! ✨🚀</p>
-        <p>${error.message}</p>
-      </div>
-    `;
+    quoteContainer.innerHTML = '<div class="quote-box"><p>Starlight malfunction! ✨🚀 ' + error.message + '</p></div>';
     quoteContainer.style.opacity = '1';
   } finally {
     generateBtn.disabled = false;
