@@ -13,7 +13,7 @@ app.use(express.static('public'));
 
 const endpoint = "https://models.github.ai/inference";
 const model =  "openai/gpt-4.1";
-const key = process.env.AZURE_AI_KEY;
+const key = AZURE_AI_KEY;
 export default async function handler(req, res) {
   try {
     const quote = await getQuote(); // or however you're fetching it
