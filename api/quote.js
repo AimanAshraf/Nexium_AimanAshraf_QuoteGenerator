@@ -1,37 +1,20 @@
-
 import express from 'express';
 import 'dotenv/config';
 import ModelClient, { isUnexpected } from "@azure-rest/ai-inference";
 import { AzureKeyCredential } from "@azure/core-auth";
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static('public'));
 
-
 const endpoint = "https://models.github.ai/inference";
-const model =  "openai/gpt-4.1";
+const model = "openai/gpt-4.1";
 const key = process.env.AZURE_AI_KEY;
-export default async function handler(req, res) {
+
+async function getQuote(keyword = "motivation") {
   try {
-    const quote = await getQuote(); // or however you're fetching it
-    res.status(200).json({ quote });
-  } catch (error) {
-    console.error("Error fetching quote:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-}
-
-
-app.post('/api/quote', async (req, res) => {
-  try {
-    const { keyword } = req.body;
-    if (!keyword) {
-      return res.status(400).json({ error: "Keyword is required" });
-    }
-
     const client = ModelClient(endpoint, new AzureKeyCredential(key));
     
     const response = await client.path("/chat/completions").post({
@@ -57,12 +40,34 @@ app.post('/api/quote', async (req, res) => {
     }
 
     const content = response.body.choices[0].message.content;
-    const quotes = content.match(/\d+\.\s*"(.*?)"/g).map(q => q.replace(/^\d+\.\s*"/, '').replace(/"$/, ''));
+    return content.match(/\d+\.\s*"(.*?)"/g).map(q => q.replace(/^\d+\.\s*"/, '').replace(/"$/, ''));
+  } catch (err) {
+    console.error("Error in getQuote:", err);
+    throw err;
+  }
+}
+
+export default async function handler(req, res) {
+  try {
+    const quote = await getQuote(req.query.keyword || "motivation");
+    res.status(200).json({ quote });
+  } catch (error) {
+    console.error("Error fetching quote:", error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+app.post('/api/quote', async (req, res) => {
+  try {
+    const { keyword } = req.body;
+    const quotes = await getQuote(keyword);
     res.json({ quotes });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+  });
+}
