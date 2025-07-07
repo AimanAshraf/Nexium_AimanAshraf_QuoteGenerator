@@ -25,31 +25,49 @@ document.getElementById('generate-btn').addEventListener('click', async () => {
     });
     
     if (!response.ok) {
-      throw new Error('Starlight connection failed');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to fetch quotes');
     }
     
     const data = await response.json();
+ 
+    console.log('API Response:', data);
     
     quoteContainer.style.opacity = '0';
     setTimeout(() => {
-      quoteContainer.innerHTML = `
-        <div class="quote-box">
-          <ol class="quote-list">
-            ${data.quotes.map(quote => `<li>"${quote}"</li>`).join('')}
-          </ol>
-        </div>
-      `;
+      if (data.quotes && data.quotes.length > 0) {
+        quoteContainer.innerHTML = `
+          <div class="quote-box">
+            <h3>✨ Quotes about ${keyword} ✨</h3>
+            <ol class="quote-list">
+              ${data.quotes.map(quote => `<li>"${quote}"</li>`).join('')}
+            </ol>
+          </div>
+        `;
+      } else {
+        quoteContainer.innerHTML = `
+          <div class="quote-box">
+            <p>No quotes found about ${keyword}.</p>
+            <p>Try a different topic or check back later! ✨</p>
+          </div>
+        `;
+      }
       quoteContainer.style.opacity = '1';
     }, 300);
     
   } catch (error) {
-    quoteContainer.innerHTML = '<div class="quote-box"><p>Starlight malfunction! ✨🚀 ' + error.message + '</p></div>';
+    console.error('Fetch error:', error);
+    quoteContainer.innerHTML = `
+      <div class="quote-box">
+        <p>✨ Cosmic Connection Issue ✨</p>
+        <p>${error.message || 'Please try again later'}</p>
+      </div>
+    `;
     quoteContainer.style.opacity = '1';
   } finally {
     generateBtn.disabled = false;
   }
 });
-
 function createSprinkles() {
   const container = document.querySelector('.floating-sprinkles');
   const colors = ['#6c63ff', '#ff6b6b', '#f8f9fa', '#ffd166', '#06d6a0'];
@@ -72,6 +90,7 @@ function createSprinkles() {
     
     container.appendChild(sprinkle);
   }
+  
   for (let i = 0; i < 5; i++) {
     const star = document.createElement('div');
     star.classList.add('sprinkle');
